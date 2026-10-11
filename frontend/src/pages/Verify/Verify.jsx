@@ -34,11 +34,22 @@ const Verify = () => {
     }
 
     try {
-      const response = await axios.post(
-        url + "/api/order/verify",
-        { orderId, sessionId },
-        { headers: { token: authToken } }
-      );
+      let response;
+      try {
+        response = await axios.post(
+          url + "/api/order/verify",
+          { orderId, sessionId },
+          { headers: { token: authToken } }
+        );
+      } catch (firstError) {
+        // Retry once after 2.5 seconds in case of mobile wallet or webhook settlement delay
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+        response = await axios.post(
+          url + "/api/order/verify",
+          { orderId, sessionId },
+          { headers: { token: authToken } }
+        );
+      }
 
       if (response.data.success) {
         setCartItems({});

@@ -179,8 +179,35 @@ const verifyOrder = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
-        const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ['payment_intent.payment_method'] });
+        if (order.payment) {
+            return res.json({ success: true, message: 'Paid' });
+        }
+
+        let session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ['payment_intent.payment_method'] });
+
+        // If mobile wallet / Apple Pay payment is still finalizing, retry once after short pause
+        const isPaidImmediately =
+            session?.payment_status === 'paid' ||
+            session?.status === 'complete' ||
+            session?.payment_intent?.status === 'succeeded';
+
+        if (!isPaidImmediately) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ['payment_intent.payment_method'] });
+        }
+
         if (!isValidPaymentSession(order, session, req.body.userId)) {
+            console.error('Payment verification failed:', {
+                orderId,
+                userId: req.body.userId,
+                session_payment_status: session?.payment_status,
+                session_status: session?.status,
+                payment_intent_status: session?.payment_intent?.status,
+                session_currency: session?.currency,
+                order_currency: order.currency,
+                session_amount_total: session?.amount_total,
+                order_amountInMinorUnits: order.amountInMinorUnits,
+            });
             return res.status(400).json({ success: false, message: 'Payment not confirmed' });
         }
 
@@ -190,7 +217,7 @@ const verifyOrder = async (req, res) => {
         });
         res.json({ success: true, message: 'Paid' });
     } catch (error) {
-        console.error(error);
+        console.error('Payment verification exception:', error);
         res.status(500).json({ success: false, message: 'Payment verification failed' });
     }
 }
