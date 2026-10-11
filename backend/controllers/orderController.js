@@ -1,6 +1,8 @@
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import foodModel from "../models/foodModel.js";
+import promoCodeModel from "../models/promoCodeModel.js";
+import promoSettingsModel from "../models/promoSettingsModel.js";
 import Stripe from "stripe";
 import { calculateOrderTotals } from '../utils/orderPricing.js';
 import { isValidPaymentSession } from '../utils/paymentValidation.js';
@@ -19,7 +21,26 @@ const placeOrder = async (req, res) => {
         const amount = Number(req.body.amount);
         const currency = req.body.currency ? String(req.body.currency).trim().toUpperCase() : 'USD';
         const address = req.body.address;
-        const discountPercent = Number(req.body.discountPercent || 0);
+        let discountPercent = 0;
+        const requestedDiscount = Number(req.body.discountPercent || 0);
+        const promoCode = req.body.promoCode ? sanitizeText(req.body.promoCode).trim().toUpperCase() : '';
+
+        if (requestedDiscount > 0) {
+            if (promoCode) {
+                const promo = await promoCodeModel.findOne({ code: promoCode, isActive: true });
+                if (promo && Number(promo.discountPercent) === requestedDiscount) {
+                    discountPercent = Number(promo.discountPercent);
+                } else {
+                    const legacy = await promoSettingsModel.findById('promo');
+                    if (legacy && legacy.isActive && legacy.code?.toUpperCase() === promoCode && Number(legacy.discountPercent) === requestedDiscount) {
+                        discountPercent = Number(legacy.discountPercent);
+                    }
+                }
+            }
+            if (discountPercent === 0) {
+                return res.status(400).json({ success: false, message: 'Invalid or inactive promo code' });
+            }
+        }
 
         if (!items.length || !address || !validatePrice(amount) || items.some((item) => !item?._id || !validateQuantity(item?.quantity))) {
             return res.status(400).json({ success: false, message: 'Invalid order data' });
@@ -181,6 +202,11 @@ const verifyOrder = async (req, res) => {
 
         if (order.payment) {
             return res.json({ success: true, message: 'Paid' });
+        }
+
+        const orderWithSession = await orderModel.findOne({ sessionId });
+        if (orderWithSession && String(orderWithSession._id) !== orderId) {
+            return res.status(400).json({ success: false, message: 'Payment session has already been used' });
         }
 
         let session = await stripe.checkout.sessions.retrieve(sessionId, { expand: ['payment_intent.payment_method'] });

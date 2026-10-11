@@ -56,6 +56,7 @@ const PlaceOrder = () => {
             items: orderItems,
             amount: Number(totalAmount.toFixed(2)),
             currency: code,
+            promoCode: promoSettings.code,
             discountPercent: promoSettings.discountPercent,
         }
         try {
