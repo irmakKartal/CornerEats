@@ -8,7 +8,7 @@ import { isValidObjectId, sanitizeText, validatePrice, validateQuantity } from '
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-const allowedStatuses = new Set(['Food Processing', 'Out for delivery', 'Delivered']);
+const allowedStatuses = new Set(['Pending', 'Food Processing', 'Out for delivery', 'Delivered']);
 
 // Placing User Order for Frontend
 const placeOrder = async (req, res) => {

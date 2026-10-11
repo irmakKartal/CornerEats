@@ -77,8 +77,11 @@ const Order = () => {
         if (paymentFilter === 'paid' && !order.payment) return false;
         if (paymentFilter === 'unpaid' && order.payment) return false;
 
-        // Order status filter
-        if (statusFilter !== 'all' && order.status !== statusFilter) return false;
+        // Order status filter: unpaid orders have no operational status and are excluded from status filters
+        if (statusFilter !== 'all') {
+          if (!order.payment) return false;
+          if (order.status !== statusFilter) return false;
+        }
 
         // Search query
         if (searchQuery.trim()) {
@@ -203,6 +206,7 @@ const Order = () => {
                 aria-label='Filter by order status'
               >
                 <option value='all'>All Statuses</option>
+                <option value='Pending'>Pending</option>
                 <option value='Food Processing'>Food Processing</option>
                 <option value='Out for delivery'>Out for delivery</option>
                 <option value='Delivered'>Delivered</option>
@@ -309,20 +313,22 @@ const Order = () => {
               </div>
 
               <div className='order-status-action'>
-                <select
-                  onChange={(e) => statusHandler(e, order._id)}
-                  value={order.status}
-                  disabled={!order.payment}
-                  title={!order.payment ? 'Cannot change status until payment is confirmed' : 'Order status'}
-                  aria-label='Order status'
-                >
-                  <option value='Pending'>Pending</option>
-                  <option value='Food Processing'>Food Processing</option>
-                  <option value='Out for delivery'>Out for delivery</option>
-                  <option value='Delivered'>Delivered</option>
-                </select>
-                {!order.payment && (
-                  <p className='unpaid-status-hint'>⚠️ Disabled: Payment pending</p>
+                {order.payment ? (
+                  <select
+                    onChange={(e) => statusHandler(e, order._id)}
+                    value={order.status || 'Pending'}
+                    aria-label='Order status'
+                  >
+                    <option value='Pending'>Pending</option>
+                    <option value='Food Processing'>Food Processing</option>
+                    <option value='Out for delivery'>Out for delivery</option>
+                    <option value='Delivered'>Delivered</option>
+                  </select>
+                ) : (
+                  <div className='unpaid-status-box'>
+                    <span className='unpaid-no-status-badge'>— No Status</span>
+                    <small className='unpaid-status-hint'>Awaiting payment</small>
+                  </div>
                 )}
               </div>
             </div>

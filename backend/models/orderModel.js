@@ -7,7 +7,7 @@ const orderSchema = new mongoose.Schema({
     currency: { type: String, required: true, default: 'USD' },
     amountInMinorUnits: { type: Number, required: true, default: 0 },
     address:{type:Object,required:true},
-    status: {type:String,default:"Food Processing"},
+    status: {type:String,default:"Pending"},
     date: {type:Date,default:Date.now},
     payment:{type:Boolean,default:false},
     discountPercent:{type:Number,default:0}
