@@ -1,0 +1,155 @@
+.edit-food-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.edit-food-modal {
+  width: min(560px, 100%);
+  max-height: min(90vh, 760px);
+  overflow-y: auto;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.edit-food-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #e7e7e7;
+}
+
+.edit-food-close {
+  border: none;
+  background: transparent;
+  color: #555;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.edit-food-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+}
+
+.edit-food-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #555;
+  font-size: 14px;
+}
+
+.edit-food-form input,
+.edit-food-form textarea,
+.edit-food-form select {
+  width: 100%;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font: inherit;
+  outline: none;
+}
+
+.edit-food-form input:focus,
+.edit-food-form textarea:focus,
+.edit-food-form select:focus {
+  border-color: tomato;
+}
+
+.edit-food-image-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: #777;
+  font-size: 13px;
+}
+
+.edit-food-image-preview img {
+  width: 76px;
+  height: 76px;
+  flex: 0 0 76px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #f4f4f4;
+}
+
+.edit-food-image-preview span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edit-food-image-field input[type="file"] {
+  padding: 8px;
+  background: #fafafa;
+  font-size: 13px;
+}
+
+.edit-food-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.edit-food-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.edit-food-cancel,
+.edit-food-submit {
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.edit-food-cancel {
+  color: #555;
+  background: #f0f0f0;
+}
+
+.edit-food-submit {
+  color: white;
+  background: #FF4C24;
+}
+
+.edit-food-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+@media (max-width: 600px) {
+  .edit-food-modal-backdrop {
+    padding: 12px;
+  }
+
+  .edit-food-form,
+  .edit-food-modal-header {
+    padding: 16px;
+  }
+
+  .edit-food-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-food-actions {
+    flex-direction: column-reverse;
+  }
+
+  .edit-food-actions button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,177 @@
+.accounts-page {
+  flex: 1;
+  min-width: 0;
+  padding: 30px;
+}
+
+.accounts-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.accounts-eyebrow {
+  margin: 0 0 6px;
+  color: tomato;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.accounts-header h1 {
+  margin: 0;
+  color: #262626;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.accounts-count {
+  margin-top: 6px;
+  color: #777;
+  font-size: 14px;
+}
+
+.accounts-search {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(100%, 320px);
+  color: #555;
+  font-size: 13px;
+}
+
+.accounts-search input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d5d5d5;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  outline: none;
+}
+
+.accounts-search input:focus {
+  border-color: tomato;
+  box-shadow: 0 0 0 3px rgba(255, 99, 71, 0.12);
+}
+
+.accounts-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.accounts-table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.accounts-table th,
+.accounts-table td {
+  padding: 15px 16px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.accounts-table th {
+  position: sticky;
+  top: 0;
+  color: #666;
+  background: #fff8f7;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.accounts-table td {
+  color: #444;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.accounts-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.accounts-name {
+  min-width: 140px;
+  color: #262626 !important;
+  font-weight: 600;
+}
+
+.accounts-address {
+  min-width: 220px;
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}
+
+.accounts-empty {
+  height: 120px;
+  color: #777 !important;
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.accounts-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 2px;
+  color: #666;
+  font-size: 13px;
+}
+
+.accounts-pagination div {
+  display: flex;
+  gap: 8px;
+}
+
+.accounts-pagination button {
+  min-width: 82px;
+  padding: 8px 12px;
+  border: 1px solid #d7d7d7;
+  border-radius: 5px;
+  background: #fff;
+  color: #333;
+  font: inherit;
+  cursor: pointer;
+}
+
+.accounts-pagination button:disabled {
+  color: #999;
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+  .accounts-page {
+    padding: 20px 12px;
+  }
+
+  .accounts-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .accounts-search {
+    width: 100%;
+  }
+
+  .accounts-header h1 {
+    font-size: 24px;
+  }
+
+  .accounts-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

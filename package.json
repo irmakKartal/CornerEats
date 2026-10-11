@@ -1,0 +1,13 @@
+{
+  "name": "cornereats-food-delivery-app",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev -- --host 0.0.0.0",
+    "dev:admin": "npm --prefix admin run dev -- --host 0.0.0.0",
+    "dev:backend": "npm --prefix backend run dev",
+    "lint": "npm --prefix frontend run lint && npm --prefix admin run lint",
+    "test": "node --test backend/tests/*.test.js && node --test frontend/src/utils/*.test.js",
+    "build": "npm --prefix frontend run build && npm --prefix admin run build",
+    "check": "npm run lint && npm test && npm run build"
+  }
+}

@@ -1,0 +1,81 @@
+.list-table-format{
+    display: grid;
+    grid-template-columns: 0.5fr 2fr 1fr 1fr 0.5fr;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    border: 1px solid #cacaca;
+    font-size: 13px;
+}
+.list-table-format.title{
+    background-color: #f9f9f9;
+}
+.list-table-format img{
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+.list-table-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.list-table-actions button {
+    min-width: 68px;
+    padding: 8px 11px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+.list-edit-button {
+    color: #265c8b;
+    background: #edf5fc;
+    border-color: #d6e8f7 !important;
+}
+.list-edit-button:hover {
+    color: #fff;
+    background: #286c9e;
+    border-color: #286c9e !important;
+}
+.list-remove-button {
+    color: #a62c2c;
+    background: #fff0ee;
+    border-color: #f5d7d2 !important;
+}
+.list-remove-button:hover {
+    color: #fff;
+    background: #c94437;
+    border-color: #c94437 !important;
+}
+@media(max-width:650px){
+    .list-table-format{
+        grid-template-columns: 48px 1fr auto;
+        gap: 8px 12px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+    }
+    .list-table-format.title{
+        display: none;
+    }
+    .list-table-format img{
+        width: 44px;
+        height: 44px;
+        grid-row: span 2;
+    }
+    .list-table-actions {
+        grid-column: 2 / -1;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+    .list-table-actions button {
+        min-width: 60px;
+        padding: 6px 10px;
+    }
+}
