@@ -63,6 +63,23 @@ const Order = () => {
     }
   };
 
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    try {
+      const response = await api.delete(`${url}/api/order/${orderId}`);
+      if (response.data.success) {
+        toast.success('Order deleted successfully');
+        await fetchAllOrders();
+      } else {
+        toast.error(response.data.message || 'Unable to delete order');
+      }
+    } catch (error) {
+      if (error.response?.status !== 401) {
+        toast.error(error.response?.data?.message || 'Unable to delete order');
+      }
+    }
+  };
+
   useEffect(() => {
     fetchAllOrders();
   }, []);
@@ -314,20 +331,40 @@ const Order = () => {
 
               <div className='order-status-action'>
                 {order.payment ? (
-                  <select
-                    onChange={(e) => statusHandler(e, order._id)}
-                    value={order.status || 'Pending'}
-                    aria-label='Order status'
-                  >
-                    <option value='Pending'>Pending</option>
-                    <option value='Food Processing'>Food Processing</option>
-                    <option value='Out for delivery'>Out for delivery</option>
-                    <option value='Delivered'>Delivered</option>
-                  </select>
+                  <div className='paid-status-box'>
+                    <select
+                      onChange={(e) => statusHandler(e, order._id)}
+                      value={order.status || 'Pending'}
+                      aria-label='Order status'
+                    >
+                      <option value='Pending'>Pending</option>
+                      <option value='Food Processing'>Food Processing</option>
+                      <option value='Out for delivery'>Out for delivery</option>
+                      <option value='Delivered'>Delivered</option>
+                    </select>
+                    {order.status === 'Delivered' && (
+                      <button
+                        type='button'
+                        className='order-archive-btn'
+                        onClick={() => handleDeleteOrder(order._id)}
+                        title='Delete completed order'
+                      >
+                        Archive
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <div className='unpaid-status-box'>
                     <span className='unpaid-no-status-badge'>— No Status</span>
                     <small className='unpaid-status-hint'>Awaiting payment</small>
+                    <button
+                      type='button'
+                      className='order-delete-btn'
+                      onClick={() => handleDeleteOrder(order._id)}
+                      title='Delete unpaid abandoned order'
+                    >
+                      Delete
+                    </button>
                   </div>
                 )}
               </div>

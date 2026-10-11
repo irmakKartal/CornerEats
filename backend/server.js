@@ -57,6 +57,8 @@ app.use(cors({
     return callback(new Error('Origin is not allowed by CORS'));
   },
 }));
+// Mount raw parser for Stripe webhook before global json parser
+app.use('/api/order/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '1mb' }));
 app.use('/api', apiLimiter);
 app.use('/api/user/login', authLimiter);

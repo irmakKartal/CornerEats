@@ -248,4 +248,85 @@ const verifyOrder = async (req, res) => {
     }
 }
 
-export { placeOrder, listOrders, userOrders, updateStatus, verifyOrder }
+// Stripe Webhook: Asynchronously fulfills orders directly from Stripe events
+const stripeWebhook = async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    let event;
+
+    if (webhookSecret && sig) {
+        try {
+            event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+        } catch (err) {
+            console.error('Webhook signature verification failed:', err.message);
+            return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
+    } else {
+        try {
+            event = typeof req.body === 'string' || Buffer.isBuffer(req.body)
+                ? JSON.parse(req.body.toString())
+                : req.body;
+        } catch {
+            return res.status(400).send('Invalid webhook payload');
+        }
+    }
+
+    if (event?.type === 'checkout.session.completed' || event?.type === 'checkout.session.async_payment_succeeded') {
+        const session = event.data.object;
+        const orderId = session.client_reference_id || session.metadata?.orderId;
+        const userId = session.metadata?.userId;
+
+        if (orderId && isValidObjectId(orderId)) {
+            try {
+                const order = await orderModel.findById(orderId);
+                if (order && !order.payment) {
+                    await orderModel.findByIdAndUpdate(orderId, {
+                        payment: true,
+                        sessionId: session.id,
+                        status: 'Pending',
+                    });
+                    if (userId) {
+                        await userModel.findByIdAndUpdate(userId, { cartData: {} }).catch(() => {});
+                    }
+                    console.log(`Order ${orderId} successfully marked as paid via Stripe webhook.`);
+                }
+            } catch (error) {
+                console.error('Error fulfilling order from webhook:', error);
+            }
+        }
+    }
+
+    res.json({ received: true });
+};
+
+// Admin order removal: Safely delete abandoned unpaid orders or completed delivered orders
+const deleteOrder = async (req, res) => {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+        return res.status(400).json({ success: false, message: 'Invalid order ID' });
+    }
+
+    try {
+        const order = await orderModel.findById(id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        // Protect active kitchen orders
+        if (order.payment && order.status !== 'Delivered') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete an active paid order. Only unpaid or delivered orders can be removed.',
+            });
+        }
+
+        await orderModel.findByIdAndDelete(id);
+        res.json({ success: true, message: 'Order removed successfully' });
+    } catch (error) {
+        console.error('Error deleting order:', error);
+        res.status(500).json({ success: false, message: 'Unable to delete order' });
+    }
+};
+
+export { placeOrder, listOrders, userOrders, updateStatus, verifyOrder, stripeWebhook, deleteOrder }
