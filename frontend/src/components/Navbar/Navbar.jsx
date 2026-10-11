@@ -1,8 +1,8 @@
-import { useContext, useState } from 'react'
+import { useContext, useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import './Navbar.css'
 import { assets } from '../../assets/assets'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { StoreContext } from '../../Context/StoreContext'
 
 const Navbar = ({ setShowLogin }) => {
@@ -10,6 +10,35 @@ const Navbar = ({ setShowLogin }) => {
   const [menu, setMenu] = useState("home");
   const { getTotalCartAmount, token ,setToken, food_list, searchQuery, setSearchQuery } = useContext(StoreContext);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === '/' && location.hash) {
+      const id = location.hash.replace('#', '');
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location]);
+
+  const scrollToSection = (sectionId, menuName) => {
+    setMenu(menuName);
+    if (location.pathname !== '/') {
+      navigate(`/#${sectionId}`);
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -23,12 +52,50 @@ const Navbar = ({ setShowLogin }) => {
 
   return (
     <div className='navbar'>
-      <Link to='/'><img className='logo' src={assets.logo} alt="" /></Link>
+      <Link to='/' onClick={() => setMenu("home")}><img className='logo' src={assets.logo} alt="" /></Link>
       <ul className="navbar-menu">
-        <Link to="/" onClick={() => setMenu("home")} className={`${menu === "home" ? "active" : ""}`}>home</Link>
-        <a href='#explore-menu' onClick={() => setMenu("menu")} className={`${menu === "menu" ? "active" : ""}`}>menu</a>
-        <a href='#app-download' onClick={() => setMenu("mob-app")} className={`${menu === "mob-app" ? "active" : ""}`}>mobile app</a>
-        <a href='#footer' onClick={() => setMenu("contact")} className={`${menu === "contact" ? "active" : ""}`}>contact us</a>
+        <Link
+          to="/"
+          onClick={() => {
+            setMenu("home");
+            if (location.pathname === '/') {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          className={`${menu === "home" && location.pathname === "/" ? "active" : ""}`}
+        >
+          home
+        </Link>
+        <a
+          href='#explore-menu'
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection('explore-menu', 'menu');
+          }}
+          className={`${menu === "menu" && location.pathname === "/" ? "active" : ""}`}
+        >
+          menu
+        </a>
+        <a
+          href='#app-download'
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection('app-download', 'mob-app');
+          }}
+          className={`${menu === "mob-app" && location.pathname === "/" ? "active" : ""}`}
+        >
+          mobile app
+        </a>
+        <a
+          href='#footer'
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection('footer', 'contact');
+          }}
+          className={`${menu === "contact" ? "active" : ""}`}
+        >
+          contact us
+        </a>
       </ul>
       <div className="navbar-right">
         <div className="navbar-search">
