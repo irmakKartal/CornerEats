@@ -153,7 +153,11 @@ const listOrders = async (_req, res) => {
 // User Orders for Frontend
 const userOrders = async (req, res) => {
     try {
-        const orders = await orderModel.find({ userId: req.body.userId, payment: true }).sort({ date: -1, _id: -1 });
+        const orders = await orderModel.find({
+            userId: req.body.userId,
+            payment: true,
+            isDeleted: { $ne: true },
+        }).sort({ date: -1, _id: -1 });
         res.json({ success: true, data: orders })
     } catch (error) {
         console.log(error);
@@ -299,7 +303,7 @@ const stripeWebhook = async (req, res) => {
     res.json({ received: true });
 };
 
-// Admin order removal: Safely delete abandoned unpaid orders or completed delivered orders
+// Soft Delete: Move order to Trash
 const deleteOrder = async (req, res) => {
     const { id } = req.params;
     if (!isValidObjectId(id)) {
@@ -313,19 +317,111 @@ const deleteOrder = async (req, res) => {
         }
 
         // Protect active kitchen orders
-        if (order.payment && order.status !== 'Delivered') {
+        if (order.payment && order.status !== 'Delivered' && !order.isArchived) {
             return res.status(400).json({
                 success: false,
-                message: 'Cannot delete an active paid order. Only unpaid or delivered orders can be removed.',
+                message: 'Cannot delete an active paid order. Only unpaid, delivered, or archived orders can be moved to trash.',
             });
         }
 
-        await orderModel.findByIdAndDelete(id);
-        res.json({ success: true, message: 'Order removed successfully' });
+        await orderModel.findByIdAndUpdate(id, {
+            isDeleted: true,
+            deletedAt: new Date(),
+        });
+        res.json({ success: true, message: 'Order moved to trash' });
     } catch (error) {
         console.error('Error deleting order:', error);
         res.status(500).json({ success: false, message: 'Unable to delete order' });
     }
 };
 
-export { placeOrder, listOrders, userOrders, updateStatus, verifyOrder, stripeWebhook, deleteOrder }
+// Restore order from Trash
+const restoreOrder = async (req, res) => {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+        return res.status(400).json({ success: false, message: 'Invalid order ID' });
+    }
+
+    try {
+        const order = await orderModel.findByIdAndUpdate(id, {
+            isDeleted: false,
+            deletedAt: null,
+        }, { new: true });
+        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        res.json({ success: true, message: 'Order restored from trash', data: order });
+    } catch (error) {
+        console.error('Error restoring order:', error);
+        res.status(500).json({ success: false, message: 'Unable to restore order' });
+    }
+};
+
+// Permanent delete from DB
+const permanentDeleteOrder = async (req, res) => {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+        return res.status(400).json({ success: false, message: 'Invalid order ID' });
+    }
+
+    try {
+        const order = await orderModel.findByIdAndDelete(id);
+        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        res.json({ success: true, message: 'Order permanently deleted' });
+    } catch (error) {
+        console.error('Error permanently deleting order:', error);
+        res.status(500).json({ success: false, message: 'Unable to delete order' });
+    }
+};
+
+// Archive an order
+const archiveOrder = async (req, res) => {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+        return res.status(400).json({ success: false, message: 'Invalid order ID' });
+    }
+
+    try {
+        const order = await orderModel.findByIdAndUpdate(id, {
+            isArchived: true,
+            archivedAt: new Date(),
+        }, { new: true });
+        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        res.json({ success: true, message: 'Order archived', data: order });
+    } catch (error) {
+        console.error('Error archiving order:', error);
+        res.status(500).json({ success: false, message: 'Unable to archive order' });
+    }
+};
+
+// Unarchive an order
+const unarchiveOrder = async (req, res) => {
+    const { id } = req.params;
+    if (!isValidObjectId(id)) {
+        return res.status(400).json({ success: false, message: 'Invalid order ID' });
+    }
+
+    try {
+        const order = await orderModel.findByIdAndUpdate(id, {
+            isArchived: false,
+            archivedAt: null,
+        }, { new: true });
+        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        res.json({ success: true, message: 'Order restored from archive', data: order });
+    } catch (error) {
+        console.error('Error unarchiving order:', error);
+        res.status(500).json({ success: false, message: 'Unable to unarchive order' });
+    }
+};
+
+export {
+    placeOrder,
+    listOrders,
+    userOrders,
+    updateStatus,
+    verifyOrder,
+    stripeWebhook,
+    deleteOrder,
+    restoreOrder,
+    permanentDeleteOrder,
+    archiveOrder,
+    unarchiveOrder,
+};

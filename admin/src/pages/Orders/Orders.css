@@ -24,10 +24,54 @@
     gap: 16px;
 }
 
+.order-title-live {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .order-title-row h3 {
     font-size: 22px;
     color: #202720;
     margin: 0;
+}
+
+.order-live-pulse {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.pulse-dot {
+    width: 7px;
+    height: 7px;
+    background-color: #10b981;
+    border-radius: 50%;
+    animation: livePulse 2s infinite ease-in-out;
+}
+
+@keyframes livePulse {
+    0% {
+        transform: scale(0.9);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.9);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
 }
 
 .order-subtitle {
@@ -203,6 +247,16 @@
 .filter-count.unpaid-count {
     background: #fee2e2;
     color: #b91c1c;
+}
+
+.filter-count.archived-count {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.filter-count.trash-count {
+    background: #fef2f2;
+    color: #991b1b;
 }
 
 .order-list {
@@ -474,6 +528,109 @@
     background: #f8fafc;
     border-color: #94a3b8;
     color: #334155;
+}
+
+.item-in-trash {
+    background: #fffafa;
+    border-color: #fecaca;
+    opacity: 0.92;
+}
+
+.item-archived {
+    background: #fbfbfe;
+    border-color: #e2e8f0;
+}
+
+.order-state-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.order-state-tag.archived {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.order-state-tag.trash {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.completed-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.completed-actions-row .order-archive-btn,
+.completed-actions-row .order-delete-btn {
+    flex: 1;
+}
+
+.trash-actions-box,
+.archived-actions-box {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 160px;
+}
+
+.trash-hint-tag {
+    font-size: 11px;
+    color: #b91c1c;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.archived-status-tag {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.order-restore-btn {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.order-restore-btn:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1e40af;
+}
+
+.order-permanent-delete-btn {
+    background: #fef2f2;
+    border: 1px solid #f87171;
+    color: #b91c1c;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.order-permanent-delete-btn:hover {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
 }
 
 @media (max-width: 1100px) {

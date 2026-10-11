@@ -14,7 +14,7 @@ const getNormalizedAmount = (order) => {
 
 const Order = () => {
   const [orders, setOrders] = useState([]);
-  const [paymentFilter, setPaymentFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'paid' | 'unpaid' | 'archived' | 'trash'
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date-new');
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,6 +47,25 @@ const Order = () => {
     }
   };
 
+  // Real-time live status updates
+  useEffect(() => {
+    fetchAllOrders();
+
+    const interval = setInterval(() => {
+      fetchAllOrders();
+    }, 5000);
+
+    const handleFocus = () => {
+      fetchAllOrders();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
   const statusHandler = async (event, orderId) => {
     try {
       const response = await api.post(`${url}/api/order/status`, {
@@ -54,6 +73,7 @@ const Order = () => {
         status: event.target.value,
       });
       if (response.data.success) {
+        toast.success('Order status updated');
         await fetchAllOrders();
       }
     } catch (error) {
@@ -63,12 +83,13 @@ const Order = () => {
     }
   };
 
+  // Move order to Trash (Soft delete)
   const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    if (!window.confirm('Move this order to trash?')) return;
     try {
       const response = await api.delete(`${url}/api/order/${orderId}`);
       if (response.data.success) {
-        toast.success('Order deleted successfully');
+        toast.success(response.data.message || 'Order moved to trash');
         await fetchAllOrders();
       } else {
         toast.error(response.data.message || 'Unable to delete order');
@@ -80,21 +101,98 @@ const Order = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAllOrders();
-  }, []);
+  // Archive an order
+  const handleArchiveOrder = async (orderId) => {
+    try {
+      const response = await api.post(`${url}/api/order/archive/${orderId}`);
+      if (response.data.success) {
+        toast.success('Order archived');
+        await fetchAllOrders();
+      } else {
+        toast.error(response.data.message || 'Unable to archive order');
+      }
+    } catch (error) {
+      if (error.response?.status !== 401) {
+        toast.error(error.response?.data?.message || 'Unable to archive order');
+      }
+    }
+  };
 
-  const paidCount = orders.filter((order) => order.payment).length;
-  const unpaidCount = orders.filter((order) => !order.payment).length;
+  // Restore order from Archive
+  const handleUnarchiveOrder = async (orderId) => {
+    try {
+      const response = await api.post(`${url}/api/order/unarchive/${orderId}`);
+      if (response.data.success) {
+        toast.success('Order restored to active orders');
+        await fetchAllOrders();
+      } else {
+        toast.error(response.data.message || 'Unable to unarchive order');
+      }
+    } catch (error) {
+      if (error.response?.status !== 401) {
+        toast.error(error.response?.data?.message || 'Unable to unarchive order');
+      }
+    }
+  };
+
+  // Restore order from Trash
+  const handleRestoreOrder = async (orderId) => {
+    try {
+      const response = await api.post(`${url}/api/order/restore/${orderId}`);
+      if (response.data.success) {
+        toast.success('Order restored from trash');
+        await fetchAllOrders();
+      } else {
+        toast.error(response.data.message || 'Unable to restore order');
+      }
+    } catch (error) {
+      if (error.response?.status !== 401) {
+        toast.error(error.response?.data?.message || 'Unable to restore order');
+      }
+    }
+  };
+
+  // Permanently delete order from DB
+  const handlePermanentDeleteOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to PERMANENTLY delete this order? This action cannot be undone.')) return;
+    try {
+      const response = await api.delete(`${url}/api/order/permanent/${orderId}`);
+      if (response.data.success) {
+        toast.success('Order permanently deleted');
+        await fetchAllOrders();
+      } else {
+        toast.error(response.data.message || 'Unable to permanently delete order');
+      }
+    } catch (error) {
+      if (error.response?.status !== 401) {
+        toast.error(error.response?.data?.message || 'Unable to delete order');
+      }
+    }
+  };
+
+  const activeOrders = orders.filter((order) => !order.isArchived && !order.isDeleted);
+  const paidCount = activeOrders.filter((order) => order.payment).length;
+  const unpaidCount = activeOrders.filter((order) => !order.payment).length;
+  const archivedCount = orders.filter((order) => order.isArchived && !order.isDeleted).length;
+  const trashCount = orders.filter((order) => order.isDeleted).length;
 
   const filteredAndSortedOrders = useMemo(() => {
     return orders
       .filter((order) => {
-        // Payment filter
-        if (paymentFilter === 'paid' && !order.payment) return false;
-        if (paymentFilter === 'unpaid' && order.payment) return false;
+        // Tab filter
+        if (activeTab === 'active') {
+          if (order.isArchived || order.isDeleted) return false;
+        } else if (activeTab === 'paid') {
+          if (order.isArchived || order.isDeleted || !order.payment) return false;
+        } else if (activeTab === 'unpaid') {
+          if (order.isArchived || order.isDeleted || order.payment) return false;
+        } else if (activeTab === 'archived') {
+          if (!order.isArchived || order.isDeleted) return false;
+        } else if (activeTab === 'trash') {
+          if (!order.isDeleted) return false;
+        }
 
-        // Order status filter: unpaid orders have no operational status and are excluded from status filters
+        // Order status filter (for operational orders)
         if (statusFilter !== 'all') {
           if (!order.payment) return false;
           if (order.status !== statusFilter) return false;
@@ -137,16 +235,14 @@ const Order = () => {
         }
         return 0;
       });
-  }, [orders, paymentFilter, statusFilter, sortBy, searchQuery]);
+  }, [orders, activeTab, statusFilter, sortBy, searchQuery]);
 
   const hasActiveFilters =
-    paymentFilter !== 'all' ||
     statusFilter !== 'all' ||
     sortBy !== 'date-new' ||
     searchQuery.trim() !== '';
 
   const resetAllFilters = () => {
-    setPaymentFilter('all');
     setStatusFilter('all');
     setSortBy('date-new');
     setSearchQuery('');
@@ -157,34 +253,53 @@ const Order = () => {
       <div className='order-header-section'>
         <div className='order-title-row'>
           <div>
-            <h3>Orders Management</h3>
+            <div className='order-title-live'>
+              <h3>Orders Management</h3>
+              <span className='order-live-pulse' title='Live real-time sync active'>
+                <span className='pulse-dot'></span> Live
+              </span>
+            </div>
             <p className='order-subtitle'>
-              Showing {filteredAndSortedOrders.length} of {orders.length} orders
+              Showing {filteredAndSortedOrders.length} orders
             </p>
           </div>
 
-          {/* Payment filter tabs */}
+          {/* Section & Status Filter Tabs */}
           <div className='order-filter-tabs'>
             <button
               type='button'
-              className={`filter-tab ${paymentFilter === 'all' ? 'active' : ''}`}
-              onClick={() => setPaymentFilter('all')}
+              className={`filter-tab ${activeTab === 'active' ? 'active' : ''}`}
+              onClick={() => setActiveTab('active')}
             >
-              All Orders <span className='filter-count'>{orders.length}</span>
+              Active <span className='filter-count'>{activeOrders.length}</span>
             </button>
             <button
               type='button'
-              className={`filter-tab ${paymentFilter === 'paid' ? 'active' : ''}`}
-              onClick={() => setPaymentFilter('paid')}
+              className={`filter-tab ${activeTab === 'paid' ? 'active' : ''}`}
+              onClick={() => setActiveTab('paid')}
             >
               Paid <span className='filter-count paid-count'>{paidCount}</span>
             </button>
             <button
               type='button'
-              className={`filter-tab ${paymentFilter === 'unpaid' ? 'active' : ''}`}
-              onClick={() => setPaymentFilter('unpaid')}
+              className={`filter-tab ${activeTab === 'unpaid' ? 'active' : ''}`}
+              onClick={() => setActiveTab('unpaid')}
             >
               Unpaid <span className='filter-count unpaid-count'>{unpaidCount}</span>
+            </button>
+            <button
+              type='button'
+              className={`filter-tab ${activeTab === 'archived' ? 'active' : ''}`}
+              onClick={() => setActiveTab('archived')}
+            >
+              📦 Archived <span className='filter-count archived-count'>{archivedCount}</span>
+            </button>
+            <button
+              type='button'
+              className={`filter-tab ${activeTab === 'trash' ? 'active' : ''}`}
+              onClick={() => setActiveTab('trash')}
+            >
+              🗑️ Trash <span className='filter-count trash-count'>{trashCount}</span>
             </button>
           </div>
         </div>
@@ -213,22 +328,24 @@ const Order = () => {
           </div>
 
           <div className='order-filter-selects'>
-            {/* Filter by Order Status */}
-            <div className='filter-select-group'>
-              <label htmlFor='statusFilter'>Status:</label>
-              <select
-                id='statusFilter'
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                aria-label='Filter by order status'
-              >
-                <option value='all'>All Statuses</option>
-                <option value='Pending'>Pending</option>
-                <option value='Food Processing'>Food Processing</option>
-                <option value='Out for delivery'>Out for delivery</option>
-                <option value='Delivered'>Delivered</option>
-              </select>
-            </div>
+            {/* Filter by Order Status (for non-trash/unpaid views) */}
+            {activeTab !== 'unpaid' && activeTab !== 'trash' && (
+              <div className='filter-select-group'>
+                <label htmlFor='statusFilter'>Status:</label>
+                <select
+                  id='statusFilter'
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  aria-label='Filter by order status'
+                >
+                  <option value='all'>All Statuses</option>
+                  <option value='Pending'>Pending</option>
+                  <option value='Food Processing'>Food Processing</option>
+                  <option value='Out for delivery'>Out for delivery</option>
+                  <option value='Delivered'>Delivered</option>
+                </select>
+              </div>
+            )}
 
             {/* Sort Dropdown */}
             <div className='filter-select-group'>
@@ -264,7 +381,13 @@ const Order = () => {
       <div className='order-list'>
         {filteredAndSortedOrders.length === 0 ? (
           <div className='order-empty-state'>
-            <p>No orders matching your criteria.</p>
+            <p>
+              {activeTab === 'archived'
+                ? 'No archived orders.'
+                : activeTab === 'trash'
+                ? 'Trash is empty.'
+                : 'No orders matching your criteria.'}
+            </p>
             {hasActiveFilters && (
               <button
                 type='button'
@@ -277,12 +400,21 @@ const Order = () => {
           </div>
         ) : (
           filteredAndSortedOrders.map((order) => (
-            <div key={order._id} className='order-item'>
+            <div
+              key={order._id}
+              className={`order-item ${order.isDeleted ? 'item-in-trash' : ''} ${order.isArchived ? 'item-archived' : ''}`}
+            >
               <img src={assets.parcel_icon} alt='Order parcel' />
               <div>
                 <div className='order-item-id-badge'>
                   <span className='id-label'>Order ID:</span>
                   <code className='id-value'>#{order._id}</code>
+                  {order.isArchived && !order.isDeleted && (
+                    <span className='order-state-tag archived'>📦 Archived</span>
+                  )}
+                  {order.isDeleted && (
+                    <span className='order-state-tag trash'>🗑️ In Trash</span>
+                  )}
                 </div>
                 <p className='order-item-food'>
                   {order.items.map((item, index) => {
@@ -330,7 +462,50 @@ const Order = () => {
               </div>
 
               <div className='order-status-action'>
-                {order.payment ? (
+                {/* 1. TRASH TAB ACTIONS */}
+                {order.isDeleted ? (
+                  <div className='trash-actions-box'>
+                    <span className='trash-hint-tag'>Deleted</span>
+                    <button
+                      type='button'
+                      className='order-restore-btn'
+                      onClick={() => handleRestoreOrder(order._id)}
+                      title='Restore order from trash'
+                    >
+                      ↺ Restore
+                    </button>
+                    <button
+                      type='button'
+                      className='order-permanent-delete-btn'
+                      onClick={() => handlePermanentDeleteOrder(order._id)}
+                      title='Permanently delete from database'
+                    >
+                      ✕ Delete Forever
+                    </button>
+                  </div>
+                ) : order.isArchived ? (
+                  /* 2. ARCHIVED TAB ACTIONS */
+                  <div className='archived-actions-box'>
+                    <span className='archived-status-tag'>Status: {order.status}</span>
+                    <button
+                      type='button'
+                      className='order-restore-btn'
+                      onClick={() => handleUnarchiveOrder(order._id)}
+                      title='Restore to active orders'
+                    >
+                      ↺ Unarchive
+                    </button>
+                    <button
+                      type='button'
+                      className='order-delete-btn'
+                      onClick={() => handleDeleteOrder(order._id)}
+                      title='Move to trash'
+                    >
+                      Move to Trash
+                    </button>
+                  </div>
+                ) : order.payment ? (
+                  /* 3. ACTIVE PAID ORDERS */
                   <div className='paid-status-box'>
                     <select
                       onChange={(e) => statusHandler(e, order._id)}
@@ -343,17 +518,28 @@ const Order = () => {
                       <option value='Delivered'>Delivered</option>
                     </select>
                     {order.status === 'Delivered' && (
-                      <button
-                        type='button'
-                        className='order-archive-btn'
-                        onClick={() => handleDeleteOrder(order._id)}
-                        title='Delete completed order'
-                      >
-                        Archive
-                      </button>
+                      <div className='completed-actions-row'>
+                        <button
+                          type='button'
+                          className='order-archive-btn'
+                          onClick={() => handleArchiveOrder(order._id)}
+                          title='Move completed order to archive'
+                        >
+                          📦 Archive
+                        </button>
+                        <button
+                          type='button'
+                          className='order-delete-btn'
+                          onClick={() => handleDeleteOrder(order._id)}
+                          title='Move order to trash'
+                        >
+                          Trash
+                        </button>
+                      </div>
                     )}
                   </div>
                 ) : (
+                  /* 4. ACTIVE UNPAID ORDERS */
                   <div className='unpaid-status-box'>
                     <span className='unpaid-no-status-badge'>— No Status</span>
                     <small className='unpaid-status-hint'>Awaiting payment</small>
@@ -363,7 +549,7 @@ const Order = () => {
                       onClick={() => handleDeleteOrder(order._id)}
                       title='Delete unpaid abandoned order'
                     >
-                      Delete
+                      Move to Trash
                     </button>
                   </div>
                 )}

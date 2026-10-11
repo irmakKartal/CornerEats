@@ -39,12 +39,37 @@ const MyOrders = () => {
     }
   }, [token, url]);
 
+  // Real-time live status updates (polls every 5s and on window focus)
   useEffect(() => {
     const activeToken = token || localStorage.getItem("token");
-    if (activeToken) {
+    if (!activeToken) return;
+
+    fetchOrders();
+
+    const interval = setInterval(() => {
       fetchOrders();
-    }
+    }, 5000);
+
+    const handleFocus = () => {
+      fetchOrders();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [fetchOrders, token]);
+
+  // Keep modal details in sync if order status changes in real-time
+  useEffect(() => {
+    if (selectedOrder) {
+      const updated = data.find((o) => o._id === selectedOrder._id);
+      if (updated && updated.status !== selectedOrder.status) {
+        setSelectedOrder(updated);
+      }
+    }
+  }, [data, selectedOrder]);
 
   const handleReorder = async (order) => {
     if (!order?.items?.length) return;
@@ -81,7 +106,12 @@ const MyOrders = () => {
 
   return (
     <div className='my-orders' data-currency={currencyConfig?.code}>
-      <h2>My Orders</h2>
+      <div className='my-orders-header'>
+        <h2>My Orders</h2>
+        <span className='my-orders-live-badge' title='Real-time order tracking active'>
+          <span className='live-dot'></span> Live Updates
+        </span>
+      </div>
       <div className="container">
         {data.length === 0 ? (
           <div className="no-orders-box">

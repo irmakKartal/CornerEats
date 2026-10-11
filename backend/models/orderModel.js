@@ -10,7 +10,12 @@ const orderSchema = new mongoose.Schema({
     status: {type:String,default:"Pending"},
     date: {type:Date,default:Date.now},
     payment:{type:Boolean,default:false},
-    discountPercent:{type:Number,default:0}
+    discountPercent:{type:Number,default:0},
+    sessionId:{type:String},
+    isArchived:{type:Boolean,default:false},
+    archivedAt:{type:Date},
+    isDeleted:{type:Boolean,default:false},
+    deletedAt:{type:Date}
 })
 
 const orderModel = mongoose.models.order || mongoose.model("order", orderSchema);
