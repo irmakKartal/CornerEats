@@ -119,7 +119,6 @@ const placeOrder = async (req, res) => {
 
         const session = await stripe.checkout.sessions.create({
             mode: 'payment',
-            payment_method_types: ['card'],
             client_reference_id: String(newOrder._id),
             success_url: `${frontendUrl}/verify?orderId=${newOrder._id}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${frontendUrl}/verify?orderId=${newOrder._id}&cancel=true`,
