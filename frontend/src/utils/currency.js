@@ -315,7 +315,8 @@ export const formatDate = (
 };
 
 // Async initialization: Fetch real device country via IP and live FX rates from backend/API
-export const initCurrency = async (apiUrl = 'http://localhost:4000') => {
+const defaultApiUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'https://cornereats-backend.onrender.com';
+export const initCurrency = async (apiUrl = defaultApiUrl) => {
   if (typeof window === 'undefined') return;
 
   // 1. Detect device country from IP
@@ -360,5 +361,5 @@ export const initCurrency = async (apiUrl = 'http://localhost:4000') => {
 
 // Run auto-init in browser environments
 if (typeof window !== 'undefined') {
-  initCurrency();
+  initCurrency(defaultApiUrl);
 }
