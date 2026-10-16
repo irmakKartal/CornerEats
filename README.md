@@ -26,6 +26,11 @@ A modern, production-grade commercial food delivery ecosystem. Engineered as a t
 | **Operations & Admin Portal** | Vercel Edge | Food catalog, discount codes, live order status & trash/archive | [corner-eats-admin.vercel.app](https://corner-eats-admin.vercel.app) |
 | **Backend REST Services** | Render | Node.js / Express API, MongoDB connection, Stripe Webhooks | [cornereats-backend.onrender.com](https://cornereats-backend.onrender.com) |
 
+> 🔑 **Demo Admin Portal Credentials:**
+> - **Email:** `admin@admin.com`
+> - **Password:** `admin123`
+> *(Use these credentials to sign in and explore the live kitchen dashboard, manage inventory, and monitor orders)*
+
 ---
 
 ## 🏗️ System Architecture & Engineering Highlights

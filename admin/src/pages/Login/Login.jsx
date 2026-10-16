@@ -50,6 +50,30 @@ const Login = ({ onLogin }) => {
           onChange={(event) => setPassword(event.target.value)}
           required
         />
+        <div 
+          style={{
+            background: '#f1f5f9',
+            border: '1px dashed #94a3b8',
+            borderRadius: '6px',
+            padding: '10px 12px',
+            fontSize: '13px',
+            color: '#334155',
+            marginTop: '4px',
+            cursor: 'pointer',
+            lineHeight: '1.4'
+          }}
+          onClick={() => {
+            setEmail('admin@admin.com');
+            setPassword('admin123');
+          }}
+          title="Click to auto-fill demo credentials"
+        >
+          <div style={{ fontWeight: 600, color: '#df5b35', marginBottom: '2px' }}>
+            ⚡ Demo Credentials (Click to fill):
+          </div>
+          <div><strong>Email:</strong> admin@admin.com</div>
+          <div><strong>Password:</strong> admin123</div>
+        </div>
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Signing in...' : 'Sign in'}
         </button>
